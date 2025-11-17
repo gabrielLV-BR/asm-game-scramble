@@ -1,18 +1,110 @@
-; Clears the screen with a solid color
-; IN AX - Color to clean the screen with
+; Limpa a tela com uma cor solida
+; IN AX - A cor para limpar a tela
 CLEAR_SCREEN proc
     push CX
     push DX
 
-    CLD             ; Clear DF (direction flag)
-                    ; For string operations, DF = 0
-                    ; means DI will be incremented each loop
+    CLD             ; Limpa DF (direction flag)
+                    ; Para operacoes de string, DF = 0
+                    ; significa que ele sera incrementado
+                    ; a cada loop
     xor DI, DI
-    mov CX, SCREEN_SIZE ; Load up CX with screen size
-    rep STOSB           ; Repeatedly run STOSB ([ES:DI] <- AX; DI++)
-                        ; while CX > 0
+    mov CX, SCREEN_SIZE ; Carrega CX com o tamanho da tela
+    rep STOSB           ; Roda STOSB ([ES:DI] <- AX; DI++)
+                        ; enquanto CX > 0
     
     pop DX
     pop CX
+    
+    ret
+endp
+
+; Desenha um sprite na tela
+; IN AX - A posicao X do sprite na tela
+; IN BX - A posicao Y do sprite na tela
+; IN CX - O indice do sprite para ser desenhado
+; IN SI - O endereco inicial do sprite
+DRAW_SPRITE proc
+    push AX
+    push BX
+    push CX
+    push DX
+
+    ; Transformamos a posicao X Y
+    ; na posicao real de memoria
+    call TO_MEMORY_LOCATION
+
+    ; Movemos para AX a largura
+    ; e para BX a altura
+    mov AX, [SI]
+    add SI, 2
+    mov BX, [SI]
+    add SI, 2
+    
+    ; Calculamos a posicao de memoria do
+    ; sprite com base no indice informado
+    push AX
+    
+    add AX, BX
+    mul CX
+    add SI, AX
+
+    pop AX
+    
+    ; Limitados a quantidade de linhas e
+    ; colunas que serao desenhadas para
+    ; nao ocorrer overflow
+    
+    ; TODO
+    
+    ; Limpamos a flag de direcao
+    cld
+    
+    ; Iteramos as linhas e desenhamos coluna a coluna
+    DRAW_SPRITE_LINE_LOOP:
+        ; Copiamos toda as colunas da linha deste
+        ; sprite na memoria
+        mov CX, AX
+        rep movsb
+
+        ; Avancamos o equivalente a uma linha na
+        ; area de memoria e retrocedemos as colunas
+        add DI, SCREEN_WIDTH
+        sub DI, AX
+
+        ; Reduzimos um da altura e realizamos
+        ; o laco de novo caso ainda sobrem
+        ; linhas
+        dec BX
+        jnz DRAW_SPRITE_LINE_LOOP
+    
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+
+    ret
+endp
+
+; Calcula a posicao de memoria de uma dada coordenada
+; IN AX - Coordenada X
+; IN BX - Coordenada Y
+; OUT DI - Posicao de memoria resultante
+TO_MEMORY_LOCATION proc
+    push AX
+    push BX
+    push DX
+
+    mov DI, AX
+
+    mov AX, BX
+    mov BX, SCREEN_WIDTH
+    mul BX
+
+    add DI, AX
+    
+    pop DX
+    pop BX
+    pop AX
     ret
 endp

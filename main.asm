@@ -8,7 +8,7 @@
 
 .data
 ; ==========
-; Constantes e estado global
+; Constantes
 ; ==========
     CRET        EQU 0DH ; Char 'Enter'
     LFED        EQU 0AH ; Char 'New line'
@@ -16,15 +16,26 @@
     SCREEN_WIDTH EQU 320
     SCREEN_HEIGHT EQU 200
     SCREEN_SIZE EQU SCREEN_WIDTH*SCREEN_HEIGHT
-        
+    
     FRONT_BUFFER_LOC EQU 0A000H
     BACK_BUFFER_LOC EQU 02000H
         
+    KEY_DOWN    EQU 50H
+    KEY_UP      EQU 48H
+    KEY_LEFT    EQU 4BH
+    KEY_RIGHT   EQU 4DH
+    KEY_FIRE    EQU 2CH ; Z
+    
+    PLAYER_SPEED EQU 5
+    
+; ==========
+; Estado global
+; ==========
     HELLO       DB 'HELLO, WORLD'
     HELLO_SZ    DW $ - HELLO
     
-    PLAYER_X    DW ?
-    PLAYER_Y    DW ?
+    PLAYER_X    DW 100
+    PLAYER_Y    DW 100
     PLAYER_IDX  DW 0
     
     PLAYER_SPRITE   DW 3, 3 ; Largura, Altura
@@ -35,7 +46,6 @@
                     DB 5, 9, 6
                     DB 5, 9, 5
 
-
 .code
 
 ; ==========
@@ -43,7 +53,7 @@
 ; ==========
 include io.inc
 include draw.inc
-
+include player.inc
 
 ; ==========
 ; Start
@@ -52,16 +62,13 @@ start:
     ; Configura modo de v?deo
     mov AX, 13H
     int 10H
-    
-    ; Estado inicial basico
-    mov AX, 100
-    push AX
 
+    ; Estado inicial basico
     MAIN_LOOP:
         ; ==========
         ; PREPARACAO
         ; ==========
-
+    
         ; Configura segmentos de dados
         mov AX, @data
         mov DS, AX
@@ -73,32 +80,18 @@ start:
         ; Limpa a tela
         mov     AX, 0
         call    CLEAR_SCREEN
-        
+
         ; ==========
         ; LOGICA DO JOGO
         ; ==========
-
-        pop AX
         
-        ; Printa o quadradinho
-        mov CX, [PLAYER_IDX]
-
-        mov     BX, 100
-        mov     SI, offset PLAYER_SPRITE
-        call    DRAW_SPRITE
-
-        inc CX
-        and CX, 1
-        mov [PLAYER_IDX], CX
-        
-        inc AX
-        push AX
+        call    UPDATE_PLAYER
+        call    DRAW_PLAYER
         
         ; ==========
         ; RENDERIZACAO E TEMPORIZACAO
         ; ==========
 
-        
         ; Copia o buffer de memoria auxiliar
         ; para a regiao mapeada para a tela
         cld
@@ -114,6 +107,8 @@ start:
 
         mov CX, SCREEN_SIZE
         rep movsb
+        
+        jmp     MAIN_LOOP
         
         ; Dorme por 33 milisegundos
         ; para termos 30 FPS

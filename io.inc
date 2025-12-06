@@ -144,3 +144,10 @@ PRINT_STRING proc
     
     ret
 endp
+
+; Le input do usuario e salva na flag de INPUT
+READ_INPUT proc
+    xor AX, AX
+    int 16h
+    ret
+endp

@@ -20,20 +20,24 @@
     FRONT_BUFFER_LOC EQU 0A000H
     BACK_BUFFER_LOC EQU 02000H
         
+    RETRACE     EQU 03DAH
+    
     KEY_DOWN    EQU 50H
     KEY_UP      EQU 48H
     KEY_LEFT    EQU 4BH
     KEY_RIGHT   EQU 4DH
     KEY_FIRE    EQU 2CH ; Z
     
+    ENEMY_LIST_CAPACITY EQU 5
+    ENEMY_SPAWN_TIMER_MAX EQU 5
+
     PLAYER_SPEED EQU 5
     
 ; ==========
 ; Estado global
 ; ==========
-    HELLO       DB 'HELLO, WORLD'
-    HELLO_SZ    DW $ - HELLO
-    
+    HELLO_WORLD DB 'Hello, World$'
+
     PLAYER_X    DW 100
     PLAYER_Y    DW 100
     PLAYER_IDX  DW 0
@@ -45,30 +49,48 @@
                     DB 9, 6, 6 ; Sprite 1
                     DB 5, 9, 6
                     DB 5, 9, 5
-
+                    
+    ENEMY_SPRITE    DW 5, 3 ; Largura, Altura
+                    DB 1, 2, 3, 4, 5
+                    DB 1, 2, 3, 4, 5
+                    DB 1, 2, 3, 4, 5
+    ; Estado dos inimigos
+    ; DB Sprite index
+    ; DW Posicao X
+    ; DW Posicao Y
+    ; Atualizar tamanho caso mudar!
+    ENEMY_STRUCT_SIZE EQU 5
+    ENEMY_LIST DB ENEMY_STRUCT_SIZE*ENEMY_LIST_CAPACITY DUP(?)
+    ENEMY_LIST_COUNT DW 0
+    ENEMY_SPAWN_TIMER DW 0
+    
+    RANDOM_SEED DW ?
 .code
 
 ; ==========
 ; Includes
 ; ==========
+
 include io.inc
+include ui.inc
 include draw.inc
+include enemy.inc
 include player.inc
 
 ; ==========
 ; Start
 ; ==========
 start:   
-    ; Configura modo de v?deo
+
+    ; Configura modo de video
     mov AX, 13H
     int 10H
 
-    ; Estado inicial basico
     MAIN_LOOP:
         ; ==========
         ; PREPARACAO
         ; ==========
-    
+        
         ; Configura segmentos de dados
         mov AX, @data
         mov DS, AX
@@ -88,12 +110,36 @@ start:
         call    UPDATE_PLAYER
         call    DRAW_PLAYER
         
+        ; Logica de spawn de inimigos
+
+        inc [ENEMY_SPAWN_TIMER]
+        cmp [ENEMY_SPAWN_TIMER], ENEMY_SPAWN_TIMER_MAX
+        
+        jle ENEMY_SPAWN_TIMER_NOT_REACHED
+            mov [ENEMY_SPAWN_TIMER], 0
+            call SPAWN_ENEMY
+        ENEMY_SPAWN_TIMER_NOT_REACHED:
+            
+        call UPDATE_ENEMIES
+
         ; ==========
         ; RENDERIZACAO E TEMPORIZACAO
         ; ==========
+        
+        ; Aguarda para o v-sync
+     
+        mov DX, RETRACE
+        Vsync1:
+            in      AL,DX
+            test    AL,8
+            jz      Vsync1
+        Vsync2:
+            in      AL,DX
+            test    AL,8
+            jnz     Vsync2   
 
         ; Copia o buffer de memoria auxiliar
-        ; para a regiao mapeada para a tela
+        ; para a regiao mapeada para a tela  
         cld
 
         xor DI, DI
@@ -107,8 +153,6 @@ start:
 
         mov CX, SCREEN_SIZE
         rep movsb
-        
-        jmp     MAIN_LOOP
         
         ; Dorme por 33 milisegundos
         ; para termos 30 FPS

@@ -1,5 +1,5 @@
 ; Prints a character to the console
-; INT DX - Character to print
+; IN DX - Character to print
 PRINT_CHAR proc
 
     push AX
@@ -10,6 +10,22 @@ PRINT_CHAR proc
     pop AX
     ret
     
+endp
+
+; Altera a posicao do cursor na tela
+; IN DL - A coluna do cursor
+; IN DH - A linha do cursor
+SET_CURSOR_POSITION proc
+    push AX
+    push BX
+    
+    xor BX, BX
+    mov AX, 02H
+    int 10H
+    
+    pop BX
+    pop AX
+    ret
 endp
 
 ; Reads a character from the console
@@ -150,4 +166,35 @@ READ_INPUT proc
     xor AX, AX
     int 16h
     ret
+endp
+
+; Gera um numero aleatorio
+; IN? BX - O limite do numero
+; OUT AX - O numero aleatorio gerado
+RANDOM_NUMBER proc
+    mov AX, [RANDOM_SEED]
+    
+    push BX
+    mov BX, 5326
+    
+    ; Loucuras
+    add AX, BX
+    ;shl BX, 5
+    ;mul BX
+    
+    pop BX
+    cmp BX, 0
+    jz RANDOM_NUMBER_END
+        push DX
+        
+        xor DX, DX
+        div BX
+        mov AX, DX
+        
+        pop DX
+    
+    RANDOM_NUMBER_END:
+        mov [RANDOM_SEED], AX
+        mov AX, 80
+        ret
 endp

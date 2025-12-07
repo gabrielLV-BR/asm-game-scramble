@@ -8,8 +8,17 @@ CLEAR_SCREEN proc
                     ; Para operacoes de string, DF = 0
                     ; significa que ele sera incrementado
                     ; a cada loop
-    xor DI, DI
+    
+    ; Zera DI para limpar a tela desde o in?cio
+    ; xor DI, DI
+
+    ; Limpa tela deixando por??o vazia para textos
+    mov DI, 3200
     mov CX, SCREEN_SIZE ; Carrega CX com o tamanho da tela
+    
+    ; Subtrai
+    sub CX, DI
+    
     rep STOSB           ; Roda STOSB ([ES:DI] <- AX; DI++)
                         ; enquanto CX > 0
     

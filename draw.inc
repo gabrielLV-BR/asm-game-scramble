@@ -38,11 +38,38 @@ DRAW_SPRITE proc
     push BX
     push CX
     push DX
+    push SI
 
+    ; Verificamos se podemos desenhar o sprite
+
+    cmp AX, SCREEN_WIDTH
+    jge DRAW_SPRITE_END ; Estamos a direita da tela
+    
+    cmp BX, SCREEN_HEIGHT
+    jge DRAW_SPRITE_END ; Estamos abaixo da tela
+    
     ; Transformamos a posicao X Y
     ; na posicao real de memoria
     call TO_MEMORY_LOCATION
+    
+    ; Calculamos os pontos extremos
+    push AX
+    push BX
+    
+    add AX, [SI]
+    add SI, 2
+    add BX, [SI]
+    sub SI, 2 ; Retornamos o SI para o inicio
 
+    cmp AX, 0
+    jle DRAW_SPRITE_END ; Estamos a esquerda
+    
+    cmp BX, 0
+    jle DRAW_SPRITE_END ; Estamos acima
+    
+    pop BX
+    pop AX
+    
     ; Movemos para AX a largura
     ; e para BX a altura
     mov AX, [SI]
@@ -59,13 +86,7 @@ DRAW_SPRITE proc
     add SI, AX
 
     pop AX
-    
-    ; Limitados a quantidade de linhas e
-    ; colunas que serao desenhadas para
-    ; nao ocorrer overflow
-    
-    ; TODO
-    
+
     ; Limpamos a flag de direcao
     cld
     
@@ -86,7 +107,9 @@ DRAW_SPRITE proc
         ; linhas
         dec BX
         jnz DRAW_SPRITE_LINE_LOOP
-    
+
+DRAW_SPRITE_END:
+    pop SI
     pop DX
     pop CX
     pop BX

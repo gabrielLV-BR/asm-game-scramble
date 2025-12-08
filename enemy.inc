@@ -20,11 +20,15 @@ UPDATE_ENEMIES proc
         
         inc SI
         
+        ; Move o inimigo pra esquerda
+        sub [SI], 10
+        
         mov AX, [SI]
         add SI, 2
-        
+
         mov BX, [SI]
         add SI, 2
+        
         
         xor CX, CX
         
@@ -63,10 +67,7 @@ SPAWN_ENEMY proc
         inc BX
         
         ; Inicializa posicao X
-        mov BX, SCREEN_WIDTH
-        call RANDOM_NUMBER
-        
-        mov [BX], AX
+        mov [BX], SCREEN_WIDTH
         add BX, 2
         
         ; Inicializa posicao Y

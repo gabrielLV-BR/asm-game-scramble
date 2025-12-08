@@ -7,7 +7,7 @@ DRAW_UI proc
     mov bx, 0 ; Page number, 0 for graphics modes
     mov ah, 2h
     int 10h
-    ;call SET_CURSOR_POSITION
+    call SET_CURSOR_POSITION
 
     ; IN DI - Address of string
     ; IN CX - String length

@@ -14,6 +14,8 @@
 ;          Um caso haja
 
 CHECK_COLLISION proc
+    push AX
+    push BX
     push BP
     mov  BP, SP
 
@@ -44,12 +46,14 @@ CHECK_COLLISION proc
     jle  CHECK_COLLISION_NO_COLLISION
 
     mov  al, 1
-    jmp  done
+    jmp  CHECK_COLLISION_END
 
 CHECK_COLLISION_NO_COLLISION:
     mov  al, 0
 
 CHECK_COLLISION_END:
-    pop  BP
+    pop BP
+    pop BX
+    pop AX
     ret
 endp
